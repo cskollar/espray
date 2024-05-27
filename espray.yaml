@@ -13,7 +13,7 @@ substitutions:
 
 esphome:
   name: espray-6ch
-  friendly_name: espray-6ch
+  friendly_name: eSpray-6ch
   platformio_options:
     board_build.flash_mode: dio
 
@@ -44,11 +44,8 @@ ota:
 
 logger:
   level: VERBOSE
-  # Disable UART logging (pins GPIO1/3 are used for communication with the display)
+  # Disable UART logging (used for communication with the display)
   baud_rate: 0
-
-web_server:
-  port: 80
 
 time:
   - platform: sntp
@@ -62,7 +59,7 @@ time:
 display:
   - platform: nextion
     id: nextion_display
-    update_interval: 5s
+    update_interval: 2s
     lambda: |-
       // Relay states
       char buffer[4];
@@ -92,38 +89,33 @@ display:
       } else {
         it.set_component_text("date0","NO NETWORK");
       }
+
       // Progress bar&status
-      static std::string initial_value_str;
+      static uint32_t initial_value = 0;
       static bool progress_bar_visible = true;
       if (id(controller).time_remaining_active_valve().has_value()) {
-        std::string value_str = std::to_string(id(controller).time_remaining_active_valve().value());
-        static std::string initial_value_str;
-        if (initial_value_str.empty() || !progress_bar_visible) {
-          initial_value_str = value_str;
+        uint32_t current_zone = id(controller).active_valve().value() + 1;
+        uint32_t current_value = id(controller).time_remaining_active_valve().value();
+        if (initial_value == 0 || !progress_bar_visible) {
+          initial_value = current_value;
           it.show_component("j0");
           it.show_component("state0");
           progress_bar_visible = true;
         }
-        float initial_value = std::stof(initial_value_str);
-        float current_value = std::stof(value_str);
-        int percent_value = static_cast<int>((current_value / initial_value) * 100);
+        int percent_value = static_cast<int>((static_cast<float>(current_value) / initial_value) * 100);
+        uint32_t minutes = current_value / 60;
+        uint32_t seconds = current_value % 60;
+        std::string state_str = "Active: Zone" + std::to_string(current_zone) + "  Duration: " + std::to_string(minutes) + ":" + (seconds < 10 ? "0" : "") + std::to_string(seconds);
         it.set_component_value("j0", percent_value);
+        it.set_component_text("state0", state_str.c_str());
       } else {
         if (progress_bar_visible) {
           it.hide_component("j0");
-          it.hide_component("state0");
+          it.set_component_text("state0", "IDLE");
           progress_bar_visible = false;
-          initial_value_str.clear();
+          initial_value = 0;
         }
       }
-    // DEBUG
-    on_touch:
-      then:
-        lambda: |-
-          ESP_LOGD("nextion.on_touch", "Nextion touch event detected!");
-          ESP_LOGD("nextion.on_touch", "Page Id: %i", page_id);
-          ESP_LOGD("nextion.on_touch", "Component Id: %i", component_id);
-          ESP_LOGD("nextion.on_touch", "Event type: %s", touch_event ? "Press" : "Release");
 
 light:
   - platform: esp32_rmt_led_strip
@@ -138,6 +130,7 @@ light:
     internal: true
 
 switch:
+# Relays
   - platform: gpio
     id: relay1
     pin: $rel1_gpio
@@ -162,6 +155,79 @@ switch:
     id: relay6
     pin: $rel6_gpio
     restore_mode: RESTORE_DEFAULT_OFF
+#Nextion local touch control
+  - platform: nextion
+    id: bt0_button
+    component_name: bt0
+    on_turn_on:
+        - sprinkler.start_single_valve:
+            id: controller
+            valve_number: 0
+    on_turn_off:
+        - sprinkler.shutdown:
+            id: controller
+        - sprinkler.clear_queued_valves:
+            id: controller
+  - platform: nextion
+    id: bt1_button
+    component_name: bt1
+    on_turn_on:
+        - sprinkler.start_single_valve:
+            id: controller
+            valve_number: 1
+    on_turn_off:
+        - sprinkler.shutdown:
+            id: controller
+        - sprinkler.clear_queued_valves:
+            id: controller
+  - platform: nextion
+    id: bt2_button
+    component_name: bt2
+    on_turn_on:
+        - sprinkler.start_single_valve:
+            id: controller
+            valve_number: 2
+    on_turn_off:
+        - sprinkler.shutdown:
+            id: controller
+        - sprinkler.clear_queued_valves:
+            id: controller
+  - platform: nextion
+    id: bt3_button
+    component_name: bt3
+    on_turn_on:
+        - sprinkler.start_single_valve:
+            id: controller
+            valve_number: 3
+    on_turn_off:
+        - sprinkler.shutdown:
+            id: controller
+        - sprinkler.clear_queued_valves:
+            id: controller
+  - platform: nextion
+    id: bt4_button
+    component_name: bt4
+    on_turn_on:
+        - sprinkler.start_single_valve:
+            id: controller
+            valve_number: 4
+    on_turn_off:
+        - sprinkler.shutdown:
+            id: controller
+        - sprinkler.clear_queued_valves:
+            id: controller
+  - platform: nextion
+    id: bt5_button
+    component_name: bt5
+    on_turn_on:
+        - sprinkler.start_single_valve:
+            id: controller
+            valve_number: 5
+    on_turn_off:
+        - sprinkler.shutdown:
+            id: controller
+        - sprinkler.clear_queued_valves:
+            id: controller
 
 interval:
   - interval: 10s
@@ -184,7 +250,7 @@ sprinkler:
   - id: controller
     main_switch: "Irrigation"
     auto_advance_switch: "Auto Advance"
-    valve_open_delay: 10s
+#   valve_open_delay: 10s
     valves:
       - valve_switch: "Zone 1"
         enable_switch: "Enable Zone 1"
