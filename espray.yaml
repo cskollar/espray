@@ -32,6 +32,19 @@ uart:
 
 api:
   password: !apisecret
+  on_client_connected:
+    - if:
+        condition:
+          lambda: 'return (0 == client_info.find("Home Assistant "));'
+        then:
+          - lambda: |-
+              id(nextion_display).hide_component("p1");
+              id(nextion_display).show_component("p0");
+  on_client_disconnected:
+    then:
+      - lambda: |-
+          id(nextion_display).hide_component("p0");
+          id(nextion_display).show_component("p1");
 
 wifi:
   ssid: myssid
@@ -55,6 +68,8 @@ time:
      - 0.pool.ntp.org
      - 1.pool.ntp.org
      - 2.pool.ntp.org
+  - platform: homeassistant
+    id: homeassistant_time
 
 display:
   - platform: nextion
@@ -78,19 +93,7 @@ display:
           it.set_component_value(buffer, 0);
         }
       }
-      // Set date&time
-      if (id(sntp_time).now().is_valid()) {
-        it.set_component_text("time0", id(sntp_time).now().strftime("%H:%M").c_str());
-      } else {
-        it.set_component_text("time0","NO NTP");
-      }
-      if (id(sntp_time).now().is_valid()) {
-        it.set_component_text("date0", id(sntp_time).now().strftime("%Y-%m-%d").c_str());
-      } else {
-        it.set_component_text("date0","NO NETWORK");
-      }
-
-      // Progress bar&status
+      // Progress bar & status
       static uint32_t initial_value = 0;
       static bool progress_bar_visible = true;
       if (id(controller).time_remaining_active_valve().has_value()) {
@@ -232,19 +235,48 @@ switch:
 interval:
   - interval: 10s
     then:
-      if:
-        condition:
-          wifi.connected:
-        then:
-          - light.turn_on:
-              id: esp32_rgb_led
-              brightness: 50%
-              red: 0%
-              green: 0%
-              blue: 100%
-        else:
-          - light.turn_off:
-              id: esp32_rgb_led
+      - if:
+          condition:
+            wifi.connected:
+          then:
+            - light.turn_on:
+                id: esp32_rgb_led
+                brightness: 50%
+                red: 0%
+                green: 0%
+                blue: 100%
+            - lambda: |-
+                id(nextion_display).hide_component("p3");
+                id(nextion_display).show_component("p2");
+          else:
+            - light.turn_off:
+                id: esp32_rgb_led
+            - lambda: |-
+                id(nextion_display).hide_component("p2");
+                id(nextion_display).show_component("p3");
+      - if:
+          condition:
+            api.connected:
+          then:
+            - lambda: |-
+                id(nextion_display).hide_component("p1");
+                id(nextion_display).show_component("p0");
+          else:
+            - lambda: |-
+                id(nextion_display).hide_component("p0");
+                id(nextion_display).show_component("p1");
+      - if:
+          condition:
+            time.has_time:
+          then:
+            - lambda: |-
+                // Set date&time
+                id(nextion_display).set_component_text("time0", id(sntp_time).now().strftime("%H:%M").c_str());
+                id(nextion_display).set_component_text("date0", id(sntp_time).now().strftime("%Y-%m-%d").c_str());
+          else:
+            - lambda: |-
+                id(nextion_display).set_component_text("time0", "");
+                id(nextion_display).set_component_text("date0", "NTP error");
 
 sprinkler:
   - id: controller
