@@ -13,7 +13,7 @@ substitutions:
 
 esphome:
   name: espray-6ch
-  friendly_name: eSpray-6ch
+  friendly_name: espray-6ch
   platformio_options:
     board_build.flash_mode: dio
 
@@ -56,7 +56,7 @@ ota:
   password: !otasecret
 
 logger:
-  level: VERBOSE
+  level: DEBUG
   # Disable UART logging (used for communication with the display)
   baud_rate: 0
 
@@ -68,31 +68,14 @@ time:
      - 0.pool.ntp.org
      - 1.pool.ntp.org
      - 2.pool.ntp.org
-  - platform: homeassistant
-    id: homeassistant_time
+#  - platform: homeassistant
+#    id: homeassistant_time
 
 display:
   - platform: nextion
     id: nextion_display
     update_interval: 2s
     lambda: |-
-      // Relay states
-      char buffer[4];
-      for (int i = 0; i < 6; i++) {
-        sprintf(buffer, "bt%d", i);
-        bool state;
-        if (i == 0) state = id(relay1).state;
-        else if (i == 1) state = id(relay2).state;
-        else if (i == 2) state = id(relay3).state;
-        else if (i == 3) state = id(relay4).state;
-        else if (i == 4) state = id(relay5).state;
-        else if (i == 5) state = id(relay6).state;
-        if (state) {
-          it.set_component_value(buffer, 1);
-        } else {
-          it.set_component_value(buffer, 0);
-        }
-      }
       // Progress bar & status
       static uint32_t initial_value = 0;
       static bool progress_bar_visible = true;
@@ -138,26 +121,69 @@ switch:
     id: relay1
     pin: $rel1_gpio
     restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - lambda: |-
+          id(nextion_display).set_component_value("bt0", 1);
+    on_turn_off:
+      - switch.turn_off: bt0_button
+      - lambda: |-
+          id(nextion_display).set_component_value("bt0", 0);
   - platform: gpio
     id: relay2
     pin: $rel2_gpio
     restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - lambda: |-
+          id(nextion_display).set_component_value("bt1", 1);
+    on_turn_off:
+      - switch.turn_off: bt1_button
+      - lambda: |-
+          id(nextion_display).set_component_value("bt1", 0);
   - platform: gpio
     id: relay3
     pin: $rel3_gpio
     restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - lambda: |-
+          id(nextion_display).set_component_value("bt2", 1);
+    on_turn_off:
+      - switch.turn_off: bt2_button
+      - lambda: |-
+          id(nextion_display).set_component_value("bt2", 0);
   - platform: gpio
     id: relay4
     pin: $rel4_gpio
     restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - lambda: |-
+          id(nextion_display).set_component_value("bt3", 1);
+    on_turn_off:
+      - switch.turn_off: bt3_button
+      - lambda: |-
+          id(nextion_display).set_component_value("bt3", 0);
   - platform: gpio
     id: relay5
     pin: $rel5_gpio
     restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - lambda: |-
+          id(nextion_display).set_component_value("bt4", 1);
+    on_turn_off:
+      - switch.turn_off: bt4_button
+      - lambda: |-
+          id(nextion_display).set_component_value("bt4", 0);
   - platform: gpio
     id: relay6
     pin: $rel6_gpio
     restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - lambda: |-
+          id(nextion_display).set_component_value("bt5", 1);
+    on_turn_off:
+      - switch.turn_off: bt5_button
+      - lambda: |-
+          id(nextion_display).set_component_value("bt5", 0);
+
 #Nextion local touch control
   - platform: nextion
     id: bt0_button
@@ -167,10 +193,7 @@ switch:
             id: controller
             valve_number: 0
     on_turn_off:
-        - sprinkler.shutdown:
-            id: controller
-        - sprinkler.clear_queued_valves:
-            id: controller
+        - sprinkler.shutdown: controller
   - platform: nextion
     id: bt1_button
     component_name: bt1
@@ -179,10 +202,7 @@ switch:
             id: controller
             valve_number: 1
     on_turn_off:
-        - sprinkler.shutdown:
-            id: controller
-        - sprinkler.clear_queued_valves:
-            id: controller
+        - sprinkler.shutdown: controller
   - platform: nextion
     id: bt2_button
     component_name: bt2
@@ -191,10 +211,7 @@ switch:
             id: controller
             valve_number: 2
     on_turn_off:
-        - sprinkler.shutdown:
-            id: controller
-        - sprinkler.clear_queued_valves:
-            id: controller
+        - sprinkler.shutdown: controller
   - platform: nextion
     id: bt3_button
     component_name: bt3
@@ -203,10 +220,7 @@ switch:
             id: controller
             valve_number: 3
     on_turn_off:
-        - sprinkler.shutdown:
-            id: controller
-        - sprinkler.clear_queued_valves:
-            id: controller
+        - sprinkler.shutdown: controller
   - platform: nextion
     id: bt4_button
     component_name: bt4
@@ -215,10 +229,7 @@ switch:
             id: controller
             valve_number: 4
     on_turn_off:
-        - sprinkler.shutdown:
-            id: controller
-        - sprinkler.clear_queued_valves:
-            id: controller
+        - sprinkler.shutdown: controller
   - platform: nextion
     id: bt5_button
     component_name: bt5
@@ -227,10 +238,7 @@ switch:
             id: controller
             valve_number: 5
     on_turn_off:
-        - sprinkler.shutdown:
-            id: controller
-        - sprinkler.clear_queued_valves:
-            id: controller
+        - sprinkler.shutdown: controller
 
 interval:
   - interval: 10s
@@ -261,6 +269,15 @@ interval:
             - lambda: |-
                 id(nextion_display).hide_component("p1");
                 id(nextion_display).show_component("p0");
+#            - output.turn_on: buzzer
+#            - output.ledc.set_frequency:
+#                id: buzzer
+#                frequency: "1000Hz"
+#            - output.set_level:
+#                id: buzzer
+#                level: "50%"
+#            - delay: 1s
+#            - output.turn_off: buzzer
           else:
             - lambda: |-
                 id(nextion_display).hide_component("p0");
@@ -368,3 +385,8 @@ sprinkler:
           icon: mdi:timer-outline
           entity_category: config
           disabled_by_default: false
+
+output:
+  - platform: ledc
+    pin: GPIO21
+    id: buzzer
