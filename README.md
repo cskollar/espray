@@ -13,7 +13,6 @@ Yet another ESPHome-based sprinkler controller...
 - Edit weekly schedule on local touch interface (WIP)
 - Integration with rain sensor and soil moisture probes (WIP)
 - Home Assistant dashboard template (WIP)
-- Nextion HMI file included (WIP)
 
 ## Components:
 
@@ -21,3 +20,11 @@ Yet another ESPHome-based sprinkler controller...
 - Nextion 2.8" HMI display: https://nextion.tech/discovery-series-introduction/
 
 ![Screenshot 2024-06-05 at 11 51 42](https://github.com/cskollar/espray/assets/46558488/37aac64f-19b2-465a-9cee-0cacaab574dc)
+
+## Installation:
+
+- Flash the nextion_espray.hmi file to the Nextion display using Nextion Editor
+- Connect the display to the relay board (GPIO17, GPIO18, GND, 5V). Be careful, the UART on the display is very sensitive to incorrect wiring!
+- Change the passwords (WiFi, API, OTA) in espray.yaml
+- Run `esphome run espray.yaml`
+
