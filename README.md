@@ -1,8 +1,6 @@
 # eSpray
 
-!!!! WORK IN PROGRESS !!!!
-
-Yet another ESPHome-based sprinkler controller..
+Yet another ESPHome-based sprinkler controller...
 
 ## Features:
 
@@ -11,10 +9,10 @@ Yet another ESPHome-based sprinkler controller..
 - Touch screen with local control functions, feedback, and information (current state, date, Wi-Fi and HA connection status, etc.)
 - High-quality industrial relay board based on ESP32-S3
 - Configurable zone run times and scheduling from Home Assistant frontend
-- Time setting via SNTP and API
+- Time setting via SNTP
 - Edit weekly schedule on local touch interface (WIP)
 - Integration with rain sensor and soil moisture probes (WIP)
-- Home Assistant dashboard config (WIP)
+- Home Assistant dashboard template (WIP)
 - Nextion HMI file included (WIP)
 
 ## Components:
