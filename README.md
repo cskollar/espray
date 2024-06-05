@@ -21,3 +21,5 @@ Yet another ESPHome-based sprinkler controller..
 
 - Waveshare ESP32-S3 6ch relay board: https://www.waveshare.com/esp32-s3-relay-6ch.htm
 - Nextion 2.8" HMI display: https://nextion.tech/discovery-series-introduction/
+
+![Screenshot 2024-06-05 at 11 51 42](https://github.com/cskollar/espray/assets/46558488/37aac64f-19b2-465a-9cee-0cacaab574dc)
